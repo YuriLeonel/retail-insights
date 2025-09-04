@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Logs
+logs/
+*.log
+
+# OS/Editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Builds
+build/
+dist/
+.coverage
+
+# Data
+*.csv
+*.parquet
+*.sqlite
+*.xlsx
+
+# Misc
+*.tmp
+*.swp
+
+project_plan.md
