@@ -502,8 +502,8 @@ python scripts/generate_keys.py
 
 - **Documentation**: http://localhost:8000/docs
 - **Issues**: GitHub Issues
-- **Email**: contact@retailinsights.com
+- **Email**: yurileonel.001@gmail.com
 
 ---
 
-**Built with ❤️ using FastAPI, PostgreSQL, and modern Python tools**
+**Built with FastAPI, PostgreSQL, and modern Python tools**
