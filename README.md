@@ -50,22 +50,18 @@ git clone <repository-url>
 cd retail-insights
 ```
 
-### 2. Create Virtual Environment
+### 2. Set Up Development Environment
 
 ```bash
-# Using venv
-python -m venv venv
+# Create virtual environment and install dependencies
+make setup
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+make install
 
 # Or using conda
 conda create -n retail-insights python=3.8
 conda activate retail-insights
-```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
+make install
 ```
 
 ### 4. Environment Configuration
@@ -113,15 +109,15 @@ python scripts/generate_keys.py
 # Database tables will be created automatically when you start the application
 
 # Option 2: Manual initialization
-python scripts/init_db.py
+make init-db
 ```
 
 ### 6. Start the API Server
 
-**Option 1: Using the development script (recommended)**
+**Option 1: Using Makefile (recommended)**
 
 ```bash
-python scripts/run_dev.py
+make dev
 ```
 
 **Option 2: Direct uvicorn command**
@@ -268,7 +264,7 @@ print(response.json())
 ### Starting Jupyter Lab
 
 ```bash
-jupyter lab
+make notebook
 ```
 
 Navigate to `notebooks/kpis.ipynb` for:
@@ -335,10 +331,17 @@ The analytics notebook provides insights on:
 
 ## 🧪 Testing
 
-**Option 1: Using the test runner script (recommended)**
+**Option 1: Using Makefile (recommended)**
 
 ```bash
-python scripts/run_tests.py
+# Run all tests
+make test
+
+# Run tests with coverage
+make test-cov
+
+# Run fast tests (no coverage)
+make test-fast
 ```
 
 **Option 2: Direct pytest commands**
@@ -354,9 +357,58 @@ pytest --cov=app tests/
 pytest -v tests/
 ```
 
+## 🔧 Makefile Commands
+
+The project includes a comprehensive Makefile for easy development workflow:
+
+### Quick Commands
+
+```bash
+make help          # Show all available commands
+make setup         # Create virtual environment
+make install       # Install dependencies
+make dev           # Start development server
+make test          # Run test suite
+make test-cov      # Run tests with coverage
+make test-fast     # Run tests without coverage (faster)
+make init-db       # Initialize database tables
+make seed-db       # Seed database with sample data
+make notebook      # Start Jupyter Lab
+make clean         # Clean up temporary files
+make check         # Run all quality checks (lint + test)
+make status        # Show project status
+make quickstart    # Quick setup for new developers
+```
+
+### Development Workflow
+
+```bash
+# Complete setup for new developers
+make quickstart
+source venv/bin/activate
+make install
+make init-db
+make dev
+```
+
+### Code Quality
+
+```bash
+make lint          # Run code linting
+make format        # Format code with black
+make check         # Run linting and tests
+```
+
+### Docker Commands (Optional)
+
+```bash
+make docker-build  # Build Docker image
+make docker-run    # Run Docker container
+```
+
 ## 🔧 Development Scripts
 
-The project includes several helper scripts in the `scripts/` directory:
+The project also includes several helper scripts in the `scripts/` directory:
 
 ### `generate_keys.py`
 
@@ -400,16 +452,18 @@ python scripts/seed.py
 
 ## 🔄 Development Workflow
 
-1. **Setup Environment**: `cp env.sample .env` and configure your settings
-2. **Generate Keys**: `python scripts/generate_keys.py` and update `.env`
-3. **Start the API**: `python scripts/run_dev.py` (or `uvicorn app.main:app --reload`)
-4. **Register User**: Use `/auth/register` endpoint to create your first user
-5. **Login**: Get your JWT token from `/auth/login`
-6. **Open Documentation**: Visit http://localhost:8000/docs
-7. **Test Endpoints**: Use the interactive Swagger UI with authentication
-8. **Analyze Data**: Open Jupyter and run `notebooks/kpis.ipynb`
-9. **Run Tests**: `python scripts/run_tests.py` to ensure everything works
-10. **Iterate**: Make changes and test with `--reload` for auto-restart
+1. **Quick Setup**: `make quickstart` and follow the instructions
+2. **Environment Setup**: `cp env.sample .env` and configure your settings
+3. **Generate Keys**: `python scripts/generate_keys.py` and update `.env`
+4. **Start the API**: `make dev` (or `uvicorn app.main:app --reload`)
+5. **Register User**: Use `/auth/register` endpoint to create your first user
+6. **Login**: Get your JWT token from `/auth/login`
+7. **Open Documentation**: Visit http://localhost:8000/docs
+8. **Test Endpoints**: Use the interactive Swagger UI with authentication
+9. **Analyze Data**: `make notebook` and run `notebooks/kpis.ipynb`
+10. **Run Tests**: `make test` to ensure everything works
+11. **Code Quality**: `make check` for linting and testing
+12. **Iterate**: Make changes and test with `--reload` for auto-restart
 
 ## 🗺️ Roadmap
 
