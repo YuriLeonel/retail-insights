@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for development
+  db:
+    image: postgres:15-alpine
+    container_name: retail_insights_db_dev
+    environment:
+      POSTGRES_DB: ${DB_NAME:-retail_insights_dev}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-retail_insights_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - retail_network
+
+  # Redis for development
+  redis:
+    image: redis:7-alpine
+    container_name: retail_insights_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - retail_network
+
+  # FastAPI Application for development
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: retail_insights_api_dev
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-retail_insights_dev}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - REDIS_URL=redis://redis:6379
+      - APP_ENV=development
+      - APP_DEBUG=true
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/venv
+      - /app/__pycache__
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - retail_network
+    restart: unless-stopped
+
+  # Jupyter Notebook for development
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    container_name: retail_insights_jupyter_dev
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-retail_insights_dev}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+    ports:
+      - "8888:8888"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/work/data
+      - ./models:/home/jovyan/work/models
+      - ./app:/home/jovyan/work/app
+    networks:
+      - retail_network
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+
+networks:
+  retail_network:
+    driver: bridge

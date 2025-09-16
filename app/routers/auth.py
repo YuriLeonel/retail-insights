@@ -4,17 +4,18 @@ Authentication router
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db, get_async_db_dependency
 from app.schemas.auth import UserCreate, UserResponse, Token, LoginRequest
 from app.crud import users as crud_users
-from app.auth import create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.auth import create_access_token, get_current_user, get_current_user_async, ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     user: UserCreate,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db_dependency)
 ):
     """
     Register a new user.
@@ -24,26 +25,26 @@ async def register(
     - **password**: Secure password
     """
     # Check if user already exists
-    db_user = crud_users.get_user_by_username(db, username=user.username)
+    db_user = await crud_users.get_user_by_username_async(db, username=user.username)
     if db_user:
         raise HTTPException(
             status_code=400,
             detail="Username already registered"
         )
     
-    db_user = crud_users.get_user_by_email(db, email=user.email)
+    db_user = await crud_users.get_user_by_email_async(db, email=user.email)
     if db_user:
         raise HTTPException(
             status_code=400,
             detail="Email already registered"
         )
     
-    return crud_users.create_user(db=db, user=user)
+    return await crud_users.create_user_async(db=db, user=user)
 
 @router.post("/login", response_model=Token)
 async def login(
     login_data: LoginRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db_dependency)
 ):
     """
     Login and get access token.
@@ -51,7 +52,7 @@ async def login(
     - **username**: Your username
     - **password**: Your password
     """
-    user = crud_users.authenticate_user(db, login_data.username, login_data.password)
+    user = await crud_users.authenticate_user_async(db, login_data.username, login_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -67,7 +68,7 @@ async def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
-async def read_users_me(current_user: UserResponse = Depends(get_current_user)):
+async def read_users_me(current_user = Depends(get_current_user_async)):
     """
     Get current user information.
     """

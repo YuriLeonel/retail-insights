@@ -4,9 +4,9 @@ from fastapi.security import HTTPBearer
 from dotenv import load_dotenv
 import os
 
-from app.routers import customers, products, orders, order_items, auth
-from app.database import init_db
-from app.auth import get_current_user
+from app.routers import customers, products, orders, order_items, auth, analytics, external_data, ml
+from app.database import init_db, init_async_db
+from app.auth import get_current_user, get_current_user_async
 
 load_dotenv()
 env = os.getenv("APP_ENV")
@@ -72,7 +72,9 @@ app.add_middleware(
 # Initialize database
 @app.on_event("startup")
 async def startup_event():
-    init_db()
+    # Initialize both sync and async databases
+    init_db()  # For backward compatibility
+    await init_async_db()  # For async operations
 
 # Include routers
 # Authentication router (no auth required)
@@ -87,7 +89,7 @@ app.include_router(
     customers.router,
     prefix="/customers",
     tags=["Customers"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_user_async)],
     responses={404: {"description": "Customer not found"}},
 )
 
@@ -95,7 +97,7 @@ app.include_router(
     products.router,
     prefix="/products",
     tags=["Products"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_user_async)],
     responses={404: {"description": "Product not found"}},
 )
 
@@ -103,7 +105,7 @@ app.include_router(
     orders.router,
     prefix="/orders",
     tags=["Orders"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_user_async)],
     responses={404: {"description": "Order not found"}},
 )
 
@@ -111,8 +113,29 @@ app.include_router(
     order_items.router,
     prefix="/order-items",
     tags=["Order Items"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_user_async)],
     responses={404: {"description": "Order item not found"}},
+)
+
+app.include_router(
+    analytics.router,
+    tags=["Analytics"],
+    dependencies=[Depends(get_current_user_async)],
+    responses={500: {"description": "Analytics service error"}},
+)
+
+app.include_router(
+    external_data.router,
+    tags=["External Data"],
+    dependencies=[Depends(get_current_user_async)],
+    responses={500: {"description": "External data service error"}},
+)
+
+app.include_router(
+    ml.router,
+    tags=["Machine Learning"],
+    dependencies=[Depends(get_current_user_async)],
+    responses={500: {"description": "ML service error"}},
 )
 
 @app.get("/", tags=["Root"])

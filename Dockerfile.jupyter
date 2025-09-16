@@ -1,0 +1,38 @@
+# Jupyter Dockerfile for data analysis
+FROM jupyter/scipy-notebook:latest
+
+# Set environment variables
+ENV JUPYTER_ENABLE_LAB=yes \
+    JUPYTER_TOKEN=retail-insights
+
+# Install additional Python packages
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn \
+    sqlalchemy \
+    asyncpg \
+    psycopg2-binary \
+    python-dotenv \
+    PyJWT[crypto] \
+    passlib[bcrypt] \
+    python-multipart \
+    httpx \
+    aiohttp \
+    scikit-learn \
+    joblib
+
+# Set work directory
+WORKDIR /home/jovyan/work
+
+# Copy application code for imports
+COPY app/ ./app/
+COPY requirements.txt ./
+
+# Create directories
+RUN mkdir -p data models logs
+
+# Expose Jupyter port
+EXPOSE 8888
+
+# Start Jupyter
+CMD ["start-notebook.sh", "--NotebookApp.token='retail-insights'", "--NotebookApp.password=''"]

@@ -127,6 +127,7 @@ uvicorn[standard]==0.32.1
 # Database
 sqlalchemy==2.0.36
 psycopg2-binary==2.9.10
+asyncpg==0.29.0
 
 # Security & Authentication
 PyJWT[crypto]==2.8.0
@@ -138,3 +139,10 @@ pytest==8.3.4
 pytest-cov==6.0.0
 pytest-asyncio==0.25.0
 httpx==0.28.1
+
+# External APIs
+aiohttp==3.9.5
+
+# Machine Learning
+scikit-learn==1.7.1
+joblib==1.5.2

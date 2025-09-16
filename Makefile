@@ -82,7 +82,23 @@ status: ## Show project status
 	@echo "Tests: $(shell find tests/ -name "*.py" -not -name "__*" | wc -l) test files"
 	@echo "API endpoints: $(shell find app/routers/ -name "*.py" | wc -l) router files"
 
-# Docker commands (if you want to containerize later)
+# Docker commands
+docker-dev: ## Start development environment with Docker
+	@echo "🐳 Starting development environment with Docker..."
+	./scripts/docker-setup.sh
+
+docker-dev-stop: ## Stop development environment
+	@echo "🛑 Stopping development environment..."
+	docker compose -f docker-compose.dev.yml down
+
+docker-dev-logs: ## View development logs
+	@echo "📋 Viewing development logs..."
+	docker compose -f docker-compose.dev.yml logs -f
+
+docker-dev-restart: ## Restart development environment
+	@echo "🔄 Restarting development environment..."
+	docker compose -f docker-compose.dev.yml restart
+
 docker-build: ## Build Docker image
 	docker build -t retail-insights-api .
 

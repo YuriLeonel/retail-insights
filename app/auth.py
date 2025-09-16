@@ -10,9 +10,11 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from app.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db, get_async_db_dependency
 from app.models import User
 from app.schemas.auth import UserResponse
+from app.crud import users as crud_users
 
 # Security configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -56,11 +58,11 @@ def verify_token(token: str) -> Optional[dict]:
     except InvalidTokenError:
         return None
 
-def get_current_user(
+async def get_current_user_async(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db_dependency)
 ) -> User:
-    """Get the current authenticated user"""
+    """Get the current authenticated user (async)"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -76,16 +78,39 @@ def get_current_user(
     if username is None:
         raise credentials_exception
     
-    # In a real application, you would fetch the user from the database
-    # For now, we'll create a simple user object
-    user = UserResponse(
-        user_id=1,
-        username=username, 
-        email=f"{username}@example.com",
-        is_active=True,
-        is_admin=False,
-        created_at=datetime.now(timezone.utc)
+    # Fetch user from database
+    user = await crud_users.get_user_by_username_async(db, username)
+    if user is None:
+        raise credentials_exception
+    
+    return user
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """Get the current authenticated user (sync - for backward compatibility)"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    token = credentials.credentials
+    payload = verify_token(token)
+    if payload is None:
+        raise credentials_exception
+    
+    username: str = payload.get("sub")
+    if username is None:
+        raise credentials_exception
+    
+    # Fetch user from database
+    user = crud_users.get_user_by_username(db, username)
+    if user is None:
+        raise credentials_exception
+    
     return user
 
 def require_admin(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
