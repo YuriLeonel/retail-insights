@@ -1,37 +1,50 @@
 # Retail Insights API
 
-A comprehensive retail analytics platform built with **FastAPI**, **PostgreSQL**, and **Jupyter** for data analysis and machine learning capabilities.
+A comprehensive retail analytics platform built with **FastAPI**, **PostgreSQL**, **Docker**, and **Jupyter** for advanced data analysis, machine learning, and production-ready deployment.
 
 ## 🚀 Features
 
 - **🔐 Secure Authentication**: JWT-based authentication system with password hashing
 - **🛡️ Security Headers**: Comprehensive security middleware and input validation
 - **📊 RESTful API**: Complete CRUD operations for customers, products, orders, and order items
+- **📈 Advanced Analytics**: Real-time analytics with customer insights, sales trends, and KPI tracking
+- **🤖 Machine Learning**: Demand forecasting, customer segmentation, and predictive analytics
+- **🌐 External Data Integration**: Market data APIs and external service integration
 - **📚 Interactive Documentation**: Auto-generated Swagger/OpenAPI docs at `/docs`
-- **🗄️ Database Integration**: PostgreSQL with SQLAlchemy ORM
-- **📈 Analytics Ready**: Jupyter notebooks for KPI analysis and insights
-- **🏗️ Scalable Architecture**: Modular design with separate routers, schemas, and CRUD operations
-- **🔧 Development Tools**: Helper scripts for setup, testing, and development
+- **🗄️ Database Integration**: PostgreSQL with async SQLAlchemy ORM support
+- **🐳 Docker Ready**: Complete containerization with multi-service architecture
+- **📓 Jupyter Integration**: Data analysis notebooks with ML model development
+- **🏗️ Production Infrastructure**: Nginx reverse proxy, Redis caching, and health monitoring
+- **🔧 Development Tools**: Comprehensive Makefile and helper scripts
 
 ## 🏗️ Project Structure
 
 ```
 retail-insights/
 ├── app/
-│   ├── crud/           # Database operations
-│   ├── routers/        # API endpoints
-│   ├── schemas/        # Pydantic models
-│   ├── database.py     # Database configuration
+│   ├── crud/           # Database operations (async support)
+│   ├── routers/        # API endpoints (auth, customers, products, orders, analytics, ml)
+│   ├── schemas/        # Pydantic models (including analytics schemas)
+│   ├── ml/             # Machine learning models and services
+│   ├── services/       # External API integrations
+│   ├── database.py     # Database configuration (async + sync)
 │   ├── dependencies.py # FastAPI dependencies
-│   ├── models.py       # SQLAlchemy models
+│   ├── auth.py         # Authentication utilities
 │   └── main.py         # FastAPI application
-├── notebooks/
-│   └── kpis.ipynb      # Analytics and KPIs
-├── data/               # Data files
-├── docs/               # Documentation
-├── scripts/            # Helper scripts
+├── notebooks/          # Jupyter notebooks for data analysis
+├── nginx/              # Nginx configuration for production
+├── scripts/            # Helper scripts and database initialization
+├── data/               # Data files and models
+├── models/             # ML model storage
+├── logs/               # Application logs
 ├── tests/              # Unit/integration tests
+├── docker-compose.yml  # Production Docker setup
+├── docker-compose.dev.yml # Development Docker setup
+├── Dockerfile          # Production container
+├── Dockerfile.dev      # Development container
+├── Dockerfile.jupyter  # Jupyter container
 ├── requirements.txt    # Python dependencies
+├── Makefile           # Development commands
 └── README.md
 ```
 
@@ -131,6 +144,108 @@ The API will be available at:
 - **API**: http://localhost:8000
 - **Documentation**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+
+## 🐳 Docker Deployment
+
+### Quick Start with Docker
+
+The fastest way to get started is using Docker Compose:
+
+```bash
+# Clone and start all services
+git clone <repository-url>
+cd retail-insights
+docker-compose up -d
+
+# Or for development with hot reload
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+### Docker Services
+
+The Docker setup includes:
+
+- **PostgreSQL Database**: Persistent data storage
+- **Redis Cache**: Session and data caching
+- **FastAPI Application**: Main API server
+- **Jupyter Lab**: Data analysis environment
+- **Nginx**: Reverse proxy and load balancer (production)
+
+### Environment Configuration
+
+Create a `.env` file for Docker configuration:
+
+```env
+# Database Configuration
+DB_NAME=retail_insights
+DB_USER=postgres
+DB_PASSWORD=your_secure_password_here
+DB_HOST=db
+DB_PORT=5432
+
+# Application Configuration
+APP_ENV=production
+APP_DEBUG=false
+
+# Security Configuration
+JWT_SECRET_KEY=your_jwt_secret_key_here
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Redis Configuration
+REDIS_URL=redis://redis:6379
+```
+
+### Docker Commands
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Start in development mode (with hot reload)
+docker-compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker-compose logs -f api
+
+# Stop all services
+docker-compose down
+
+# Rebuild and start
+docker-compose up --build -d
+
+# Access Jupyter Lab
+# Open http://localhost:8888 in your browser
+
+# Access API documentation
+# Open http://localhost:8000/docs in your browser
+```
+
+### Production Deployment
+
+For production deployment:
+
+```bash
+# Use production compose file
+docker-compose -f docker-compose.yml up -d
+
+# With Nginx reverse proxy
+# API will be available at http://localhost (port 80)
+# Jupyter at http://localhost:8888
+```
+
+### Individual Container Management
+
+```bash
+# Build specific containers
+docker build -t retail-insights-api .
+docker build -f Dockerfile.dev -t retail-insights-dev .
+docker build -f Dockerfile.jupyter -t retail-insights-jupyter .
+
+# Run individual containers
+docker run -p 8000:8000 retail-insights-api
+docker run -p 8888:8888 retail-insights-jupyter
+```
 
 ## 📚 API Usage Examples
 
@@ -259,30 +374,76 @@ response = requests.get("http://localhost:8000/customers/", headers=headers)
 print(response.json())
 ```
 
-## 📊 Analytics & Notebooks
+## 📊 Analytics & Machine Learning
 
-### Starting Jupyter Lab
+### Real-time Analytics API
+
+The platform provides comprehensive analytics through RESTful endpoints:
 
 ```bash
+# Get top customers by revenue
+curl -H "Authorization: Bearer <token>" \
+  "http://localhost:8000/analytics/top-customers?limit=10"
+
+# Get sales trends for the last 30 days
+curl -H "Authorization: Bearer <token>" \
+  "http://localhost:8000/analytics/sales-trends?days=30"
+
+# Get customer segmentation analysis
+curl -H "Authorization: Bearer <token>" \
+  "http://localhost:8000/analytics/customer-segments"
+
+# Get key performance indicators
+curl -H "Authorization: Bearer <token>" \
+  "http://localhost:8000/analytics/kpis"
+```
+
+### Machine Learning Capabilities
+
+#### Demand Forecasting
+
+```bash
+# Generate demand forecast for a product
+curl -X POST -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 1, "forecast_days": 30}' \
+  "http://localhost:8000/ml/forecast"
+```
+
+#### Customer Segmentation
+
+```bash
+# Run customer segmentation analysis
+curl -X POST -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"method": "rfm", "segments": 5}' \
+  "http://localhost:8000/ml/segment-customers"
+```
+
+### Jupyter Lab Integration
+
+Start Jupyter Lab for advanced data analysis:
+
+```bash
+# Using Docker (recommended)
+docker-compose up jupyter
+
+# Or locally
 make notebook
 ```
 
-Navigate to `notebooks/kpis.ipynb` for:
+Access Jupyter Lab at http://localhost:8888
 
-- Total sales revenue analysis
-- Top 10 products by sales
-- Sales performance by country
-- Customer insights and spending patterns
+### Analytics Features
 
-### Key Performance Indicators (KPIs)
-
-The analytics notebook provides insights on:
-
-- 💰 **Total Revenue**: Sum of all order items
-- 📦 **Order Volume**: Number of orders and items
-- 🏆 **Top Products**: Best-selling products
-- 🌍 **Geographic Analysis**: Sales by country
-- 👥 **Customer Analytics**: Top customers and spending patterns
+- 💰 **Revenue Analytics**: Total revenue, trends, and forecasting
+- 📦 **Product Performance**: Top products, inventory analysis, demand forecasting
+- 🌍 **Geographic Analysis**: Sales by country, regional trends
+- 👥 **Customer Insights**: Segmentation, lifetime value, behavior analysis
+- 📈 **Sales Trends**: Time-series analysis, seasonal patterns
+- 🎯 **KPI Dashboard**: Real-time key performance indicators
+- 🤖 **ML Models**: Automated forecasting and segmentation
+- 📊 **Data Visualization**: Interactive charts and reports
 
 ## 🔧 API Endpoints
 
@@ -323,6 +484,30 @@ The analytics notebook provides insights on:
 - `POST /order-items/` - Create new order item
 - `PUT /order-items/{id}` - Update order item
 - `DELETE /order-items/{id}` - Delete order item
+
+### Analytics (Authentication Required)
+
+- `GET /analytics/top-customers` - Get top customers by revenue
+- `GET /analytics/top-products` - Get top products by sales
+- `GET /analytics/sales-trends` - Get sales trends over time
+- `GET /analytics/revenue-by-country` - Get revenue breakdown by country
+- `GET /analytics/customer-segments` - Get customer segmentation analysis
+- `GET /analytics/kpis` - Get key performance indicators
+
+### Machine Learning (Authentication Required)
+
+- `POST /ml/forecast` - Generate demand forecasting
+- `POST /ml/segment-customers` - Run customer segmentation
+- `GET /ml/models` - List available ML models
+- `POST /ml/train` - Train new ML models
+- `GET /ml/predictions` - Get prediction results
+
+### External Data (Authentication Required)
+
+- `GET /external-data/market-trends` - Get market trend data
+- `GET /external-data/competitor-analysis` - Get competitor analysis
+- `POST /external-data/sync` - Sync external data sources
+- `GET /external-data/sources` - List available data sources
 
 ### Health & Status (No Auth Required)
 
@@ -464,46 +649,6 @@ python scripts/seed.py
 10. **Run Tests**: `make test` to ensure everything works
 11. **Code Quality**: `make check` for linting and testing
 12. **Iterate**: Make changes and test with `--reload` for auto-restart
-
-## 🗺️ Roadmap
-
-### Phase 1: Foundation ✅
-
-- [x] CRUD API endpoints
-- [x] Database models and schemas
-- [x] Interactive API documentation
-- [x] Basic analytics notebook
-
-### Phase 2: Authentication & Authorization ✅
-
-- [x] User authentication (JWT)
-- [x] Password hashing with bcrypt
-- [x] Security headers and middleware
-- [x] Request validation and sanitization
-- [ ] Role-based access control
-- [ ] API rate limiting
-
-### Phase 3: Advanced Analytics
-
-- [ ] Customer segmentation (RFM analysis)
-- [ ] Market basket analysis
-- [ ] Seasonal trend analysis
-- [ ] Real-time dashboards
-
-### Phase 4: Machine Learning
-
-- [ ] Sales forecasting models
-- [ ] Customer lifetime value prediction
-- [ ] Recommendation systems
-- [ ] Anomaly detection
-
-### Phase 5: Production Ready
-
-- [ ] Docker containerization
-- [ ] CI/CD pipelines
-- [ ] Monitoring and logging
-- [ ] Performance optimization
-- [ ] Automated testing suite
 
 ## 🤝 Contributing
 
